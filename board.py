@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import random
 import os
 
@@ -55,6 +55,10 @@ class Board:
         else:
             self._turn = 'red'
     
+    def get_turn_color(self) -> Tuple[int,int,int]:
+        '''获取这一轮对应的颜色'''
+        return settings.RED if self._turn == 'red' else settings.BLUE
+
     def draw_board(self, surface: pygame.Surface, images: Dict[str,pygame.Surface] ) -> None:
         '''展示棋盘'''
         for row in range(4):
@@ -93,6 +97,7 @@ class Board:
             if (start[0]+r,start[1]+c) == end:
                 return True
         return False
+
     def get_row_col_by_coordinates(self, x, y):
         '''根据坐标，获取格子的行和列'''
         for row in range(4):
@@ -101,6 +106,26 @@ class Board:
                 cell_rect = cell.get_rect()
                 if x>=cell_rect.left and x<cell_rect.right and y>=cell_rect.top and y<cell_rect.bottom:
                     return row,col
+    
+    def get_cell_by_coordinates(self,x,y) -> Cell:
+        '''根据用户点击的坐标获取格子'''
+        for row in range(4):
+            for col in range(4):
+                cell = self._container[row][col]
+                cell_rect = cell.get_rect()
+                if x>=cell_rect.left and x<cell_rect.right and y>=cell_rect.top and y<cell_rect.bottom:
+                    return cell
+    
+    def get_cell_by_row_col(self,row,col) -> Cell:
+        '''根据行和列获取格子'''
+        return self._container[row][col]
+
+    def is_valid_end(self,end_cell):
+        '''判断是否是有效的终点'''
+        # 必须是可见的相邻的对方格子或者空格子
+        # 相邻不需要判断，因为在搜索的时候就会只搜索邻居
+        return end_cell.visible and (not end_cell.get_piece() or end_cell.get_piece().color != self.turn) 
+        
 
     def collect_coordinates_and_make_move(self,x,y):
         '''收集用户点击的坐标并根据情况来下棋'''
@@ -123,25 +148,34 @@ class Board:
                 end_row_col = self.get_row_col_by_coordinates(x,y)
                 # 如果是对方的棋或者空格子并且两个格子是邻居，都是有效的，可以走棋了
                 if cell.visible and (not cell.get_piece() or cell.get_piece().color != self._turn) and self.is_neighbor(start_row_col,end_row_col):
-                    self.make_move(self.user_coordinates,(x,y))
+                    self.make_move_by_coordinates(self.user_coordinates,(x,y))
                     self.change_turn()
                 # 不管有没有效，连续点击两次后都应该清空保存的坐标
                 self.user_coordinates = None
 
-    
-    def get_cell_by_coordinates(self,x,y) -> Cell:
-        '''根据用户点击的坐标获取格子'''
-        for row in range(4):
-            for col in range(4):
-                cell = self._container[row][col]
-                cell_rect = cell.get_rect()
-                if x>=cell_rect.left and x<cell_rect.right and y>=cell_rect.top and y<cell_rect.bottom:
-                    return cell
-    
+    def make_computer_move(self,move: Tuple[Cell,...],surface) -> None:
+        '''根据电脑给出的格子走棋'''
+        if len(move) == 1:
+            cell = move[0]
+            cell.reverse_piece()
+            self.change_turn()
+        else:
+            start_cell, end_cell = move
+            start_rect = start_cell.get_rect()
+            pygame.draw.rect(surface,settings.YELLOW,start_rect,2)
+            pygame.display.update()
+            pygame.time.delay(400)
+            self.make_move_by_cell(start_cell,end_cell)
+            self.change_turn()
 
-    def make_move(self, start, end):
+    def make_move_by_coordinates(self, start, end):
+        '''根据坐标来走棋，其实就是把坐标转化为格子再走'''
         start_cell = self.get_cell_by_coordinates(*start)
         end_cell = self.get_cell_by_coordinates(*end)
+        self.make_move_by_cell(start_cell, end_cell)
+    
+    def make_move_by_cell(self,start_cell,end_cell) -> None:
+        '''根据给定的起点和终点格子来走棋'''
         start_piece = start_cell.get_piece()
         end_piece = end_cell.get_piece()
         # 往空格子走，起点清空，终点落子
@@ -175,7 +209,59 @@ class Board:
             start_cell.set_piece()
             end_cell.set_piece(start_piece)
             self.not_eat = 0
+        
 
-    
+    def run_out_of_chances(self) -> bool:
+        '''判断当前是否已经磨棋磨到极限了'''
+        return self.not_eat >= 10
+
+    def game_over(self) -> bool:
+        '''判断是否有一方的动物死绝了'''
+        red_num = 0
+        blue_num = 0
+        for row_of_board in self._container:
+            for cell in row_of_board:
+                piece = cell.get_piece()
+                if piece:
+                    if piece.color == 'red':
+                        red_num += 1
+                    else:
+                        blue_num += 1
+        return (red_num == 0 or blue_num == 0)
+
+    def get_result(self) -> Tuple[int, int]:
+        '''返回游戏的结果'''
+        player_score = 0
+        computer_score = 0
+        for row_of_board in self._container:
+            for cell in row_of_board:
+                piece = cell.get_piece()
+                if piece:
+                    if piece.color == 'red':
+                        player_score += 1
+                    else:
+                        computer_score += 1
+        return (player_score, computer_score)
+
+    def get_valid_moves(self) -> List[Tuple[Cell,...]]:
+        '''获取所有有效的棋步'''
+        valid_moves = []
+        for row in range(4):
+            for col in range(4):
+                start_cell = self._container[row][col]
+                if not start_cell.visible:
+                    valid_moves.append((start_cell,))
+                else:
+                    piece = start_cell.get_piece()
+                    if piece and piece.color == self._turn:
+                        for r, c in [(0,1),(0,-1),(1,0),(-1,0)]:
+                            if row+r >= 0 and row+r <=3 and col+c>=0 and col+c<=3:
+                                end_cell = self._container[row+r][col+c]
+                                if self.is_valid_end(end_cell):
+                                    valid_moves.append((start_cell,end_cell))
+        return valid_moves
+            
         
     
+        
+

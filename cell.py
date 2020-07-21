@@ -17,6 +17,20 @@ class Cell:
     def visible(self) -> bool:
         '''是否可以看到棋子是什么'''
         return self._visible
+
+    def is_empty(self) -> bool:
+        '''这个格子是否是空的'''
+        return self._visible and not self._piece
+
+    def meet_enemy(self, cell) -> bool:
+        '''参数中的格子是否是本格子的天敌'''
+        return cell.visible and cell._piece and cell._piece.name in self._piece.enemy
+
+    def meet_food(self, cell) -> bool:
+        '''参数中的格子是否是本格子的食物'''
+        return cell.visible and cell._piece and cell._piece.name in self._piece.food
+
+
     
     def get_rect(self) -> pygame.Rect:
         return self._rect
