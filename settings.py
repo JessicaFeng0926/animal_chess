@@ -32,6 +32,7 @@ YELLOW = (255, 255, 0)
 # 文件夹路径
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 IMAGE_DIR = os.path.join(BASE_DIR,'images')
+FONT_DIR = os.path.join(BASE_DIR,'font')
 
 # 帧速率
 FPS = 40

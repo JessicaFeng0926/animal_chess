@@ -7,7 +7,7 @@ import pygame.locals as pl
 
 import settings
 from board import Board
-from strategies import get_random_move, get_eat_move,get_best_move
+from strategies import get_random_move, get_eat_move,get_best_move,get_best_move2
 
 
 def terminate() -> None:
@@ -56,7 +56,7 @@ def play_game() -> Tuple[int,int]:
         board.draw_board(window_surface,stretched_images)
         # 绘制轮到谁出牌的提示
         color = board.get_turn_color()
-        text = 'Your turn' if board.turn == 'red' else "Computer turn"
+        text = '你的回合' if board.turn == 'red' else "对方回合"
         write_text(big_font,
                 text,
                 color,
@@ -129,16 +129,8 @@ if __name__ == "__main__":
     pygame.init()
     main_clock = pygame.time.Clock()
 
-    # 创建窗口
-    window_surface = pygame.display.set_mode((settings.WINDOW_WIDTH,settings.WINDOW_HEIGHT))
-    window_rect = window_surface.get_rect()
-    pygame.display.set_caption('斗兽棋')
-    
-    # 创建字体
-    big_font = pygame.font.SysFont(None,64)
-    small_font = pygame.font.SysFont(None,32)
-
     # 加载各种图片并且保存到一个字典里面
+    icon_image = pygame.image.load(os.path.join(settings.IMAGE_DIR,'bitbug_favicon.ico'))
     back_image = pygame.image.load(os.path.join(settings.IMAGE_DIR,'问号.jpg'))
     back_stretched_image = pygame.transform.scale(back_image,(settings.CELL_SIZE,settings.CELL_SIZE))
     stretched_images = {'back':back_stretched_image}
@@ -148,6 +140,18 @@ if __name__ == "__main__":
             original_image = pygame.image.load(os.path.join(settings.IMAGE_DIR,filename+'.jpg'))
             stretched_image = pygame.transform.scale(original_image,(settings.CELL_SIZE,settings.CELL_SIZE))
             stretched_images[filename] = stretched_image
+
+    # 创建窗口
+    pygame.display.set_icon(icon_image)
+    window_surface = pygame.display.set_mode((settings.WINDOW_WIDTH,settings.WINDOW_HEIGHT))
+    window_rect = window_surface.get_rect()
+    pygame.display.set_caption('斗兽棋')
+    
+    # 创建字体
+    big_font = pygame.font.Font(os.path.join(settings.FONT_DIR,'msyh.ttf'),48)
+    small_font = pygame.font.Font(os.path.join(settings.FONT_DIR,'msyh.ttf'),24)
+
+    
     
     while True:
         # 玩一局游戏，获得最终比分

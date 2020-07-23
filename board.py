@@ -190,7 +190,7 @@ class Board:
                 for row_of_board in self._container:
                     for cell in row_of_board:
                         if cell.get_piece() and cell.get_piece().name == 'mouse':
-                            cell.get_piece().score = 0
+                            cell.get_piece().score = 0.5
             start_cell.set_piece()
             end_cell.set_piece()
             self.not_eat = 0
@@ -198,14 +198,14 @@ class Board:
         elif start_piece.name in end_piece.food:
             # 如果是大象往老鼠身上撞，老鼠贬值
             if end_piece.name == 'mouse':
-                end_piece.score = 0
+                end_piece.score = 0.5
             start_cell.set_piece()
             self.not_eat = 0
         # 往食物身上走，吃掉对方
         elif start_piece.name in end_piece.enemy:
             # 如果是老鼠吃掉了大象，老鼠贬值
             if start_piece.name == 'mouse':
-                start_piece.score = 0
+                start_piece.score = 0.5
             start_cell.set_piece()
             end_cell.set_piece(start_piece)
             self.not_eat = 0
@@ -262,6 +262,6 @@ class Board:
         return valid_moves
             
         
-    
+
         
 
