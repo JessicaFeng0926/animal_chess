@@ -3,7 +3,7 @@ import sys
 from typing import Tuple
 
 import pygame
-import pygame.locals as pl
+
 
 import settings
 from board import Board
@@ -44,9 +44,9 @@ def play_game() -> Tuple[int,int]:
             return board.get_result()
 
         for event in pygame.event.get():
-            if event.type == pl.QUIT:
+            if event.type == pygame.QUIT:
                 terminate()
-            if event.type == pl.MOUSEBUTTONUP:
+            if event.type == pygame.MOUSEBUTTONUP:
                 if board.turn == 'red':
                     x,y = event.pos[0],event.pos[1]
                     board.collect_coordinates_and_make_move(x,y)
@@ -115,10 +115,10 @@ def play_again() -> bool:
     '''玩家决定是否再玩一盘'''
     while True:
         for event in pygame.event.get():
-            if event.type == pl.QUIT:
+            if event.type == pygame.QUIT:
                 return False
-            if event.type == pl.KEYUP:
-                if event.key == pl.K_ESCAPE:
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
                     return False
                 else:
                     return True
